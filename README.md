@@ -22,7 +22,7 @@ CODEF_Paint is a tiny painting tool coded using [CODEF](https://codef.santo.fr)
 [![](README_Medias/8-250.png)](https://raw.githubusercontent.com/N0NameN0/CODEF_Paint/master/README_Medias/8-800.png)
 [![](README_Medias/9-250.png)](https://raw.githubusercontent.com/N0NameN0/CODEF_Paint/master/README_Medias/9-800.png)
 
-## Demo
+## Try it Live
 [HERE](https://n0namen0.github.io/CODEF_Paint/)
 
 ## License
