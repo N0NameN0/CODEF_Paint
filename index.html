@@ -1,0 +1,375 @@
+<html>
+  <head>
+    <style>
+      canvas {
+        outline: black 3px solid;
+        
+      }
+    </style>
+    <script src="//codef.santo.fr/codef/codef_core.js"></script>
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script src='js/spectrum.min.js'></script>
+    <link rel='stylesheet' href='css/spectrum.min.css' />
+    <link rel='stylesheet' href='css/detail.css' />
+    <script>
+      var mycanvas;
+      var mycanvasoff;
+      var mybrushoff;
+      var W=1000;
+      var H=563;
+      
+      var MyMouseTracker;              
+      var mouseX=0;
+      var mouseY=0;
+      
+      var mediadir = 'medias/';
+      
+      var myimage = new image(mediadir+"img.jpg");
+      var mybrush=[];
+      mybrush[0] = new image(mediadir+"brush1.png");
+      mybrush[1] = new image(mediadir+"brush2.png");
+      mybrush[2] = new image(mediadir+"brush3.png");
+      mybrush[3] = new image(mediadir+"brush4.png");
+      mybrush[4] = new image(mediadir+"brush5.png");
+      mybrush[5] = new image(mediadir+"brush6.png");
+      mybrush[6] = new image(mediadir+"brush7.png");
+      mybrush[7] = new image(mediadir+"brush8.png");
+      mybrush[8] = new image(mediadir+"brush9.png");
+      mybrush[9] = new image(mediadir+"sig.png");
+      
+      
+      var mybrushData;
+      
+      var ImageData;
+      
+      var zoom=1;
+      var angle=0;
+      var currentbrush=2;
+      var currentcol='rgb(255,0,0)';
+      var rgb=[255,0,0];
+      
+      function init(){
+        mycanvas=new canvas(W,H,"main");
+        mycanvas.fill("#FFFFFF");
+        mycanvass=new canvas(W,H);
+        
+        mybrushoff=new canvas(500,500);
+        mycanvasoff=new canvas(W,H);
+        
+        
+        MyMouseTracker = new MouseTracker();
+        MyMouseTracker.addMouseTrack(mycanvas,false);
+        
+        myimage.draw(mycanvasoff,0,0);
+        ImageData=mycanvasoff.contex.getImageData(0, 0, W, H);
+        
+        mybrush[currentbrush].draw(mybrushoff,0,0);
+        mybrushData=mybrushoff.contex.getImageData(0, 0, 500, 500);
+        mybrushoff.setmidhandle();
+        
+        go();
+      }
+      
+      function go(){
+        
+        mycanvass.draw(mycanvas,0,0);
+        
+        
+        
+        mouseX = mycanvas.MousePosX ;
+        mouseY = mycanvas.MousePosY ;
+        mouseButt = mycanvas.MouseButt ;
+        mousedeltay = mycanvas.MouseDeltaY;
+        controlkey = mycanvas.ControlKey;
+        
+        
+        
+        if (mousedeltay==1) {   
+          if(controlkey==1)
+            angle+=5;
+          else if(controlkey==2){
+            currentbrush++;
+            mybrushoff.clear();
+            mybrush[Math.abs(currentbrush%10)].draw(mybrushoff,0,0);
+            mybrushData=mybrushoff.contex.getImageData(0, 0, 500, 500);
+          }
+          
+          else
+            zoom+=1;
+        }
+        
+        if (mousedeltay==-1) {
+          if(controlkey==1)
+            angle-=5;
+          else if(controlkey==2){
+            currentbrush--;
+            mybrushoff.clear();            
+            mybrush[Math.abs(currentbrush%10)].draw(mybrushoff,0,0);
+            mybrushData=mybrushoff.contex.getImageData(0, 0, 500, 500);
+          }
+          else     
+            zoom-=1;
+        }
+        
+        
+        
+        
+        
+        if(mouseX>0 && mouseX<W && mouseY>0 && mouseY<H){
+          if (mouseButt==1) {
+            if(document.getElementById("FixedColor").checked == true){
+              colorizeBrush(mouseX,mouseY,rgb[0],rgb[1],rgb[2]);
+            }
+            else
+              colorizeBrush(mouseX,mouseY);
+            if(document.getElementById("RotateBrush").checked == true)
+              angle=Math.random() * 360;
+            mybrushoff.draw(mycanvas,mouseX,mouseY,document.getElementById("alpha").value/100,angle,Math.exp(zoom/10),Math.exp(zoom/10));
+          }
+          else if (mouseButt==3) {
+            getCol(mouseX,mouseY);
+            rgbtmp = currentcol.replace(/[^\d,]/g, '').split(',');
+            rgb[0]=parseInt(rgbtmp[0],10);
+            rgb[1]=parseInt(rgbtmp[1],10);
+            rgb[2]=parseInt(rgbtmp[2],10);
+            $("#colorpicker").spectrum("set", currentcol);
+          }
+          
+          mycanvas.draw(mycanvass,0,0);
+          colorizeBrush(mouseX,mouseY,0,0,0);
+          mybrushoff.draw(mycanvas,mouseX,mouseY,0.5,angle,Math.exp(zoom/10),Math.exp(zoom/10));
+
+          if (mouseButt==2) {
+                myimage.draw(mycanvas,0,0)
+          }
+
+        }
+        
+        
+        
+        
+        
+        MyMouseTracker.MouseUpdate();
+        
+        
+        requestAnimFrame( go );
+      }
+      
+      function getCol(x,y){
+        var RR = ImageData.data[((y*W+x)*4)+0];
+        var GG = ImageData.data[((y*W+x)*4)+1];
+        var BB = ImageData.data[((y*W+x)*4)+2];
+        currentcol="rgb("+RR+", "+GG+", "+BB+")";
+      }
+      
+      function colorizeBrush(x,y,r,g,b){
+        if(typeof b !== 'undefined'){
+          var RR = r;
+          var GG = g;
+          var BB = b;
+        }else{
+          var RR = ImageData.data[((y*W+x)*4)+0];
+          var GG = ImageData.data[((y*W+x)*4)+1];
+          var BB = ImageData.data[((y*W+x)*4)+2];
+        }
+        for ( yy = 0; yy <500; yy++){
+          for ( xx = 0; xx <500; xx++){
+            mybrushData.data[((yy*500+xx)*4)+0] = RR;
+            mybrushData.data[((yy*500+xx)*4)+1] = GG;
+            mybrushData.data[((yy*500+xx)*4)+2] = BB;
+          }
+        }
+        mybrushoff.contex.putImageData(mybrushData, 0, 0);
+      }
+      
+      function MouseTracker(){
+        this.list=new Array();
+        
+        this.addMouseTrack = function(cvs,ctxmenu){
+          this.list.push(cvs);
+          cvs.canvas.MousePosXTmp = -1000000;
+          cvs.canvas.MousePosYTmp = -1000000;
+          cvs.canvas.MouseButtTmp =  0;
+          cvs.canvas.MouseDeltaYTmp =  0;
+          cvs.canvas.ControlKeyTmp =  0;
+          
+          cvs.MousePosX = -1000000;
+          cvs.MousePosY = -1000000;
+          cvs.MouseButt =  0;
+          cvs.MouseDeltaY =  0;
+          cvs.ControlKey =  0;
+          
+          cvs.canvas.addEventListener('mouseout', function(){
+            this.MousePosXTmp = -1000000;
+            this.MousePosYTmp = -1000000;
+            this.MouseButtTmp =  0;
+          }, false);
+          
+          cvs.canvas.addEventListener('mousemove', function(ev){
+            rect = this.getBoundingClientRect();
+            this.MousePosXTmp = Math.round(ev.clientX - rect.left);
+            this.MousePosYTmp = Math.round(ev.clientY - rect.top);
+          }, false);
+          
+          cvs.canvas.addEventListener('mousedown', function(ev){
+            this.MouseButtTmp = ev.which;
+          }, false);
+          
+          cvs.canvas.addEventListener('wheel', function(ev){
+            if(ev.deltaY>0) this.MouseDeltaYTmp=1;
+            if(ev.deltaY<0) this.MouseDeltaYTmp=-1;
+            if (ev.shiftKey) {
+              this.ControlKeyTmp=1;
+              ev.preventDefault();
+              return false;
+            }
+            if (ev.altKey) {
+              this.ControlKeyTmp=2;
+              ev.preventDefault();
+              return false;
+            }
+            if (!ev.ctrlKey) {
+              ev.preventDefault();
+              return false;
+            }
+          }, false);
+          
+          
+          cvs.canvas.addEventListener('mouseup', function(ev){
+            this.MouseButtTmp = 0;
+          }, false);
+          
+          
+          
+          
+          
+          if(ctxmenu==false){
+            cvs.canvas.addEventListener('contextmenu', function(e) {
+              if (e.button === 2) {
+                e.preventDefault();
+                return false;
+              }
+            }, false);
+          }
+          
+          
+        }
+          
+          this.MouseUpdate=function(){
+            for(var i=0; i<this.list.length; i++){
+              this.list[i].MouseButt = this.list[i].canvas.MouseButtTmp;
+              this.list[i].MousePosX = this.list[i].canvas.MousePosXTmp;
+              this.list[i].MousePosY = this.list[i].canvas.MousePosYTmp;
+              this.list[i].MouseDeltaY = this.list[i].canvas.MouseDeltaYTmp;
+              this.list[i].ControlKey = this.list[i].canvas.ControlKeyTmp;
+              this.list[i].canvas.MouseDeltaYTmp = 0;
+              this.list[i].canvas.ControlKeyTmp = 0;
+              
+            }
+          }
+            
+            }
+      
+      
+      function putImage(){
+        var link = document.getElementById('link');
+        var mydate = new Date();
+        link.setAttribute('download', 'CodefPaint_'+mydate.getTime()+'.png');
+        link.setAttribute('href', mycanvas.canvas.toDataURL("image/png").replace("image/png", "image/octet-stream"));
+        link.click();
+      }  
+      
+      
+    </script>
+  </head>
+  <body onLoad="init();">
+        <details>
+                <summary>Infos</summary>
+                <div>
+                  <p><b>Author</b> : NoNameNo^WAB aka Antoine Santo</p>
+                  <p><b>Twitter</b> : <a href='https://twitter.com/alonetrio'>@alonetrio</a></p>
+                  <p><b>Using</b> : <a href="https://codef.santo.fr">CODEF</a></p>
+                  <p><b>Commands</b> : 
+                              <lu>
+                              <li>Mouse scroll : Change brush size</li>
+                              <li>Mouse scroll + Shift :  Brush rotation</li>
+                              <li>Mouse scroll + Alt : Change brush</li>
+                              <li>Left Click : Draw</li>
+                              <li>Middle Click : View Original image</li>
+                              <li>Right Click : pick a color ( for fixed color mode )</li>
+                              </lu>
+              
+                  </p>
+                </div>
+              </details>
+        <center>
+    <div>
+      <input type="checkbox" id="RotateBrush" name="RotateBrush" checked>
+      <label for="RotateBrush">Rotate Brush</label>
+      &nbsp;      &nbsp;      &nbsp;      &nbsp;      &nbsp;      &nbsp;
+      <input type="range" id="alpha" name="alpha" min="0" max="100" value="20">
+      <label for="volume">Alpha</label>
+      &nbsp;      &nbsp;      &nbsp;      &nbsp;      &nbsp;      &nbsp;
+      <input type="checkbox" id="FixedColor" name="FixedColor">
+      <label for="FixedColor">Fixed Color</label>
+
+      <input id='colorpicker' />
+      
+      <script>
+        $("#colorpicker").spectrum({
+          type: "color",
+          showPalette: false,
+          showInitial: true,
+          showAlpha: false,
+          showButtons: false,
+          allowEmpty: false,
+          color: "#FF0000",
+          change: function(tinycolor) {
+           rgbtmp = tinycolor.toRgb();
+            rgb[0]=rgbtmp.r;
+            rgb[1]=rgbtmp.g;
+            rgb[2]=rgbtmp.b;
+          },
+        });
+      </script>
+      <br>
+      <input type='file' />
+      <script type="text/javascript">
+        window.addEventListener('load', function() {
+          document.querySelector('input[type="file"]').addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+              var img = document.querySelector('img');
+              
+              
+              myimage=new image(URL.createObjectURL(this.files[0]));
+              myimage.img.onload = function() {
+                mycanvas.canvas.width=myimage.img.width;
+                mycanvas.canvas.height=myimage.img.height;
+                mycanvas.fill("#FFFFFF");
+                mycanvass.canvas.width=myimage.img.width;
+                mycanvass.canvas.height=myimage.img.height;
+                mycanvasoff.canvas.width=myimage.img.width;
+                mycanvasoff.canvas.height=myimage.img.height;
+                myimage.draw(mycanvasoff,0,0);
+                W=myimage.img.width;
+                H=myimage.img.height;
+                ImageData=mycanvasoff.contex.getImageData(0, 0, W, H);
+                
+              };
+            }
+          });
+        });
+      </script>
+    </div>
+    <div id="createPNGButton"><a id="link"></a>
+      
+    </div>
+    <br>
+    <div id="main"></div><br>    <button onclick="putImage()">Save as Image</button></center>
+
+    <br>
+    <center>
+        <h1>CODEF Paint V0.6</h1>
+    </center>
+  </body>
+</html>
